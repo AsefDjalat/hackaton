@@ -1,28 +1,82 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Summarizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #uploadForm {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            width: 300px;
+            margin: 0 auto;
+            position: relative;
+        }
+        #uploadForm.dragover {
+            border-color: #000;
+        }
+        #fileInput {
+            display: none;
+        }
+        #uploadText {
+            margin-bottom: 20px;
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <h1>Upload PDF to Summarize</h1>
     <form id="uploadForm" enctype="multipart/form-data">
+        <p id="uploadText">Drag and drop a PDF here or click to select one</p>
         <input type="file" name="file" id="fileInput" accept=".pdf">
-        <button type="submit">Upload</button>
+        <button type="submit" style="display:none;">Upload</button>
     </form>
     <div id="result"></div>
 
     <script>
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput.files.length === 0) {
-                alert('Please select a file.');
-                return;
-            }
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const uploadText = document.getElementById('uploadText');
+        const result = document.getElementById('result');
 
+        uploadForm.addEventListener('click', () => fileInput.click());
+
+        uploadForm.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadForm.classList.add('dragover');
+        });
+
+        uploadForm.addEventListener('dragleave', () => {
+            uploadForm.classList.remove('dragover');
+        });
+
+        uploadForm.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadForm.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                uploadFile();
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                uploadFile();
+            }
+        });
+
+        async function uploadFile() {
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
 
@@ -45,7 +99,7 @@
                 const error = await response.json();
                 document.getElementById('result').innerText = error.error;
             }
-        });
+        }
     </script>
 </body>
 </html>
