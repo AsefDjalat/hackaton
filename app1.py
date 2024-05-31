@@ -56,8 +56,8 @@ def summarize_text_chunk(chunk):
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are a very efficient and helpful assistant."},
-            {"role": "user", "content": f"Can you summarize the following text. Identify the main language of the text and use that language in your response. Provide the summary formatted in html with only tags that concern text formatting: {chunk}"}
+            {"role": "system", "content": "Je maakt een samenvatting van de tekst die je ontvangt in het Nederlands. Geef de samenvatting met html tekstopmaak tags."},
+            {"role": "user", "content": f"{chunk}"}
         ]
     )
     return response.choices[0].message['content']
