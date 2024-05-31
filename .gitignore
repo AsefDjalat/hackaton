@@ -4,5 +4,7 @@ Library/**
 Include/**
 Scripts/**
 share/**
-
+__pycache__/**
+.idea/**
+pyvenv.cfg
 
