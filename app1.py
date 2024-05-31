@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, make_response, render_template
 import openai
 import PyPDF2
 from tenacity import retry, wait_fixed, stop_after_attempt
@@ -129,8 +129,20 @@ def upload_file():
 
     summarize_pdf(pdf_path, intermediate_txt_path, summary_txt_path)
 
-    return send_file(summary_txt_path, as_attachment=True)
+    response = make_response(jsonify({"message": "Success"}), 200)
+    return response
 
+@app.route('/summary')
+def summary():
+    filename = request.args.get('file')
+    if not filename:
+        return "No file specified", 400
+
+    summary_txt_path = os.path.join('uploads', 'summary.txt')
+    with open(summary_txt_path, 'r') as f:
+        summary = f.read()
+
+    return render_template('summary.html', summary=summary)
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
