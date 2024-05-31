@@ -1,16 +1,19 @@
 from flask import Flask, request, jsonify, make_response, render_template
+from markupsafe import Markup
 import openai
 import PyPDF2
 from tenacity import retry, wait_fixed, stop_after_attempt
 import os
+import apikeyforopenai
 
 app = Flask(__name__)
 
-# Set your OpenAI API key
+# Set your OpenAI API key0
 
 
 
 def extract_text_from_pdf(pdf_path):
+    print("extract text from pdf")
     reader = PyPDF2.PdfReader(pdf_path)
     text = ""
     for page in reader.pages:
@@ -19,11 +22,13 @@ def extract_text_from_pdf(pdf_path):
 
 
 def save_text_to_file(text, output_txt_path):
+    print("save text to file")
     with open(output_txt_path, 'w', encoding='utf-8') as f:
         f.write(text)
 
 
 def split_text_into_chunks(text, max_tokens=2000):
+    print("split text in chunks")
     words = text.split()
     chunks = []
     current_chunk = []
@@ -47,11 +52,12 @@ def split_text_into_chunks(text, max_tokens=2000):
 
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(5))
 def summarize_text_chunk(chunk):
+    print("summarize text chunk")
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a very efficient and helpful assistant."},
-            {"role": "user", "content": f"Summarize the following text: {chunk}"}
+            {"role": "user", "content": f"Can you summarize the following text. Identify the main language of the text and use that language in your response. Provide the summary formatted in html with only tags that concern text formatting: {chunk}"}
         ]
     )
     return response.choices[0].message['content']
@@ -142,7 +148,7 @@ def summary():
     with open(summary_txt_path, 'r') as f:
         summary = f.read()
 
-    return render_template('summary.html', summary=summary)
+    return render_template('summary.html', summary=Markup(summary))
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
