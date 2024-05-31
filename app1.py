@@ -134,9 +134,9 @@ def upload_file():
 
 @app.route('/summary')
 def summary():
-    filename = request.args.get('file')
-    if not filename:
-        return "No file specified", 400
+    # filename = request.args.get('file')
+    # if not filename:
+    #     return "No file specified", 400
 
     summary_txt_path = os.path.join('uploads', 'summary.txt')
     with open(summary_txt_path, 'r') as f:

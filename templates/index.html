@@ -87,7 +87,8 @@
 
             if (response.ok) {
                 const data = await response.json();
-                window.location.href = `/summary?file=${data.filename}`;
+                // window.location.href = `/summary?file=${data.filename}`;
+                window.location.href = '/summary';
             } else {
                 const error = await response.json();
                 document.getElementById('result').innerText = error.error;
