@@ -19,7 +19,7 @@ def extract_text_from_pdf(pdf_path):
 
 
 def save_text_to_file(text, output_txt_path):
-    with open(output_txt_path, 'w') as f:
+    with open(output_txt_path, 'w', encoding='utf-8') as f:
         f.write(text)
 
 
