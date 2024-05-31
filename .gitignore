@@ -1,0 +1,8 @@
+# created by virtualenv automatically
+Lib/**
+Library/**
+Include/**
+Scripts/**
+share/**
+
+
