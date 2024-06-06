@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, send_file, render_template
 import openai
 import PyPDF2
 from tenacity import retry, wait_fixed, stop_after_attempt
@@ -9,9 +9,7 @@ app = Flask(__name__)
 # Set your OpenAI API key
 
 
-
 def extract_text_from_pdf(pdf_path):
-    print("extracting text")
     reader = PyPDF2.PdfReader(pdf_path)
     text = ""
     for page in reader.pages:
@@ -19,8 +17,12 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 
+def save_text_to_file(text, output_txt_path):
+    with open(output_txt_path, 'w', encoding='utf-8') as f:
+        f.write(text)
+
+
 def split_text_into_chunks(text, max_tokens=2000):
-    print("splitting text")
     words = text.split()
     chunks = []
     current_chunk = []
@@ -44,25 +46,22 @@ def split_text_into_chunks(text, max_tokens=2000):
 
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(5))
 def summarize_text_chunk(chunk):
-    print("summerizing text chunks")
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a very efficient and helpful assistant."},
-            {"role": "user", "content": f"kan je het volgende text samenvatten zonder te vertalen: {chunk}"}
+            {"role": "user", "content": f"Summarize the following text: {chunk}"}
         ]
     )
     return response.choices[0].message['content']
 
 
 def summarize_text_chunks(chunks):
-    print("summarizing text chunks")
     summaries = [summarize_text_chunk(chunk) for chunk in chunks]
     return "\n".join(summaries)
 
 
 def split_summary_into_chunks(summary, max_tokens=2000):
-    print("splitting summary in to chunks")
     words = summary.split()
     chunks = []
     current_chunk = []
@@ -84,21 +83,28 @@ def split_summary_into_chunks(summary, max_tokens=2000):
     return chunks
 
 
-def summarize_pdf(pdf_path):
+def summarize_pdf(pdf_path, intermediate_txt_path, summary_txt_path):
     # Step 1: Extract text from PDF
     text = extract_text_from_pdf(pdf_path)
 
-    # Step 2: Split text into chunks
+    # Step 2: Save extracted text to a text file
+    save_text_to_file(text, intermediate_txt_path)
+
+    # Step 3: Split text into chunks
     chunks = split_text_into_chunks(text)
 
-    # Step 3: Summarize the chunks
+    # Step 4: Summarize the chunks
     chunk_summaries = summarize_text_chunks(chunks)
 
-    # Step 4: Merge summaries
+    # Step 5: Merge summaries and write intermediate summary to a text file
+    save_text_to_file(chunk_summaries, summary_txt_path)
+
+    # Step 6: Split the merged summary if needed and summarize again
     final_chunks = split_summary_into_chunks(chunk_summaries)
     final_summary = summarize_text_chunks(final_chunks)
 
-    return final_summary
+    # Step 7: Save the final summary to a text file
+    save_text_to_file(final_summary, summary_txt_path)
 
 
 @app.route('/')
@@ -115,11 +121,14 @@ def upload_file():
         return jsonify({"error": "No selected file"}), 400
 
     pdf_path = os.path.join('uploads', file.filename)
+    intermediate_txt_path = os.path.join('uploads', 'intermediate_text.txt')
+    summary_txt_path = os.path.join('uploads', 'summary.txt')
+
     file.save(pdf_path)
 
-    summary = summarize_pdf(pdf_path)
+    summarize_pdf(pdf_path, intermediate_txt_path, summary_txt_path)
 
-    return jsonify({"summary": summary})
+    return send_file(summary_txt_path, as_attachment=True)
 
 
 if __name__ == '__main__':
