@@ -9,7 +9,6 @@ app = Flask(__name__)
 # Set your OpenAI API key
 
 
-
 def extract_text_from_pdf(pdf_path):
     reader = PyPDF2.PdfReader(pdf_path)
     text = ""
